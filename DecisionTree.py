@@ -4,15 +4,13 @@ import numpy as np
 import random
 
 class DecisionTree(object):
-    """
-    """
+
     def __init__(self, max_depth = 3, min_samples = 2, impurity = 'entropy'):
         self.max_depth = max_depth
         self.min_samples = min_samples
         assert impurity in ['entropy','gini'],"Invalid impurity method, choose 'entropy' or 'gini'"
         self._impurity = impurity
     
-    # TREINAMENTO.....
     def _check_purity(self, data):
         """ helper """
         label_column = data[:, -1]
@@ -103,8 +101,8 @@ class DecisionTree(object):
         returns
         -------
         stop_split:
-            True: se o nó for terminal, i.e., uma das condições de parada foi atingido
-            False: se o nó for intermediário, pode ir seguir quebrando
+            True: if terminal node, then one of the stop conditions is accomplished.
+            False: if it is an intermediate node, then it can continue splitting
         """
         stop_split = self._check_purity(data) or (len(data) < self.min_samples) or \
                     (counter == self.max_depth)
@@ -112,18 +110,16 @@ class DecisionTree(object):
     
     def fit(self, df):
         """
-        função externa para montar a arvore
+        External function
         """
         self.tree_ = self._decision_tree_algorithm(df)
     
     def _decision_tree_algorithm(self, df, counter = 0):
         """
-        procedimento recursivo para montar a arvore
+        Building a decision tree recursively.
         """
     
-        # data preparations
         if counter == 0:
-            #global COLUMN_HEADERS
             self.column_headers = df.columns
             data = df.values
         else:
@@ -153,7 +149,7 @@ class DecisionTree(object):
             yes_answer = self._decision_tree_algorithm(data_below, counter)
             no_answer  = self._decision_tree_algorithm(data_above, counter)
 
-            # If the answers are the same, then there is no point in asking the qestion.
+            # If the answers are the same, then there is no point in asking the question.
             # This could happen when the data is classified even though it is not pure
             # yet (min_samples or max_depth base case).
             if np.array_equal(yes_answer, no_answer):
@@ -164,11 +160,9 @@ class DecisionTree(object):
 
             return sub_tree
     
-    # PREDICOES.....
     def predict(self, df):
         """
-        função externa para predição. 
-        percorre a arvore em busca de um nó terminal
+        External prediction
         """
         prediction = df.apply(self._classify_example, axis = 1)
         prediction = prediction.apply(pd.Series)
@@ -177,19 +171,19 @@ class DecisionTree(object):
         return prediction
     
     def _calc_probs(self, a):
-        """ helper, retorna vetor normalizado por L1"""
+        """ helper, returns L1-normalized vec"""
         norm = a[1].sum()
         res = {k: v/norm for k, v in zip(a[0], a[1])}
         return res
 
     def _get_most_prevalent_class(self, a):
-        """ helper, retorna a classe mais prevalente"""
+        """ helper, returns the prevalent class"""
         most_prevalent_idx = a[1].argmax()
         most_prevalent_class = a[0][most_prevalent_idx]
         return most_prevalent_class
     
     def _classify_example(self, example, tree = None):
-        """ proc recursivo que retorna a classificação e as probabilidades
+        """ classification and probabilities
         """
         
         if not tree:  # prim. chamada, usar arvore inteira
